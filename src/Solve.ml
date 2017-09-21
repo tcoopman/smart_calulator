@@ -24,18 +24,34 @@ let print moves =
      after googling a lot, I found that we were looking for permutations with repetions
      https://en.wikipedia.org/wiki/Permutation
      https://rosettacode.org/wiki/Permutations_with_repetitions
+     The permute 2 comes from: 
+     http://developer-should-know.com/post/76525296527/permutation-with-repetition-generation-algorithm
 *)
-let rec permute nbOfMoves allowedMoves =
-	match nbOfMoves with
-    | 0 -> [[]]
-    | _ -> 
-        List.map (fun x -> 
-        	List.map (fun move -> move :: x) allowedMoves |> List.rev
-        ) (permute (nbOfMoves - 1) allowedMoves) 
-        |> List.flatten
-        
+let permuteIterative nbOfMoves allowedMoves = 
+    let permute2 nbOfMoves allowedMoves =
+        let first = allowedMoves.(0) in
+        let size = Array.length allowedMoves in
+        let maximum = (float_of_int size) ** (float_of_int nbOfMoves) |> int_of_float in
+        let result = Array.make maximum [] in
+        for i = 0 to (maximum - 1) do
+            let permutation = Array.make nbOfMoves first in
+            let k = ref i in
+            for j = 0 to (nbOfMoves - 1) do
+                if j > 0 then k := !k /size;
+                permutation.(j) <- allowedMoves.(!k mod size)
+            done;
+            result.(i) <- (permutation |> Array.to_list);
+        done;
+        result |> Array.to_list
+    in
+    match (nbOfMoves, allowedMoves) with
+        | (0, _) -> [[]]
+        | (_, []) -> [[]]
+        | _ ->
+            permute2 nbOfMoves (Array.of_list allowedMoves)
+
 let solve start goal nbOfMoves allowedMoves =
-	let permutations = permute nbOfMoves allowedMoves in
+	let permutations = permuteIterative nbOfMoves allowedMoves in
     match (start, goal, nbOfMoves) with
     | (x, y, 0) when x == y -> [[]]
     | _->
@@ -56,4 +72,5 @@ let test =
     Js.log (assertResult 0 1 1 (solve 0 1 1[Add 1]));
     Js.log (assertResult 0 9 3 (solve 0 9 3 [Add 2; Add 3;]));
     Js.log (assertResult 0 4 4 (solve 0 4 4 [Add 2; Add 3; Divide 2; Replace (3, 4)]));
+    (* This one still fails on memory now, to solve it, don't save all the permuations but run them *)
     (* Js.log (assertResult 11 3100 9 (solve 11 3100 9 [Divide 2; Add 3; Replace (1, 2); Replace (2, 9); Add 2; Add 1; Replace (2, 10); Replace (10, 100)])) *)
