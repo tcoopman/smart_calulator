@@ -20,15 +20,19 @@ let print moves =
     List.map print moves
     |> String.concat ", "
 
+(*
+     after googling a lot, I found that we were looking for permutations with repetions
+     https://en.wikipedia.org/wiki/Permutation
+     https://rosettacode.org/wiki/Permutations_with_repetitions
+*)
 let rec permute nbOfMoves allowedMoves =
 	match nbOfMoves with
     | 0 -> [[]]
-    | 1 -> List.map (fun move -> [move]) allowedMoves
-	| _ -> 
-    	let shorter = permute (nbOfMoves - 1) allowedMoves in
+    | _ -> 
         List.map (fun x -> 
         	List.map (fun move -> move :: x) allowedMoves |> List.rev
-        ) shorter |> List.flatten
+        ) (permute (nbOfMoves - 1) allowedMoves) 
+        |> List.flatten
         
 let solve start goal nbOfMoves allowedMoves =
 	let permutations = permute nbOfMoves allowedMoves in
