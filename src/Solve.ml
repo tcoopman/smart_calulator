@@ -27,12 +27,12 @@ let print moves =
      The permute 2 comes from: 
      http://developer-should-know.com/post/76525296527/permutation-with-repetition-generation-algorithm
 *)
-let permuteIterative nbOfMoves allowedMoves = 
+let permute nbOfMoves allowedMoves filter = 
     let permute2 nbOfMoves allowedMoves =
         let first = allowedMoves.(0) in
         let size = Array.length allowedMoves in
         let maximum = (float_of_int size) ** (float_of_int nbOfMoves) |> int_of_float in
-        let result = Array.make maximum [] in
+        let result = [||] in
         for i = 0 to (maximum - 1) do
             let permutation = Array.make nbOfMoves first in
             let k = ref i in
@@ -40,7 +40,8 @@ let permuteIterative nbOfMoves allowedMoves =
                 if j > 0 then k := !k /size;
                 permutation.(j) <- allowedMoves.(!k mod size)
             done;
-            result.(i) <- (permutation |> Array.to_list);
+            let permutationResult = Array.to_list permutation in
+            if filter permutationResult then Js.Array.push permutationResult result |> ignore;
         done;
         result |> Array.to_list
     in
@@ -51,20 +52,20 @@ let permuteIterative nbOfMoves allowedMoves =
             permute2 nbOfMoves (Array.of_list allowedMoves)
 
 let solve start goal nbOfMoves allowedMoves =
-	let permutations = permuteIterative nbOfMoves allowedMoves in
+    let filter possibleSolution = goal == List.fold_left apply start possibleSolution in
+	let permutations = permute nbOfMoves allowedMoves filter in
     match (start, goal, nbOfMoves) with
     | (x, y, 0) when x == y -> [[]]
     | _->
-    	List.filter (fun possibleSolution ->
-        	goal == List.fold_left apply start possibleSolution
-        ) permutations
-        
+        permutations
 
 let assertResult start goal nbOfMoves allSolutions =
     match allSolutions with
     | [] -> false
     | moves :: _ -> 
-        Js.log (print moves);
+        Js.log "All solutions:";
+        List.iter (fun x -> Js.log (print x)) allSolutions;
+        Js.log "correct?";
         (nbOfMoves == List.length moves) && (goal == List.fold_left apply start moves)
 
 let test =
@@ -72,5 +73,5 @@ let test =
     Js.log (assertResult 0 1 1 (solve 0 1 1[Add 1]));
     Js.log (assertResult 0 9 3 (solve 0 9 3 [Add 2; Add 3;]));
     Js.log (assertResult 0 4 4 (solve 0 4 4 [Add 2; Add 3; Divide 2; Replace (3, 4)]));
-    (* This one still fails on memory now, to solve it, don't save all the permuations but run them *)
-    (* Js.log (assertResult 11 3100 9 (solve 11 3100 9 [Divide 2; Add 3; Replace (1, 2); Replace (2, 9); Add 2; Add 1; Replace (2, 10); Replace (10, 100)])) *)
+    (* This one now works, it takes a while to find all solutions, but it works :)*)
+    Js.log (assertResult 11 3100 9 (solve 11 3100 9 [Divide 2; Add 3; Replace (1, 2); Replace (2, 9); Add 2; Add 1; Replace (2, 10); Replace (10, 100)]))
